@@ -44,11 +44,15 @@
     <div>
       <button
         class="btn btn-success"
-        @click="loadTextFromFile"
+        @click="saveFile"
         :disabled="newWatchlistName.length < 1 && newWatchlistName"
       >
         Download watchlist
       </button>
+
+      <br /><br />
+
+      {{ reformattedText }}
     </div>
   </div>
 </template>
@@ -65,7 +69,46 @@ export default {
       newWatchlistName: "",
     };
   },
+  computed: {
+    reformattedText() {
+      // return this.text.split;
+      let joined = this.text
+        .join()
+        .split(",")
+        .filter((item) => item.indexOf("###") < 0);
+      console.log(joined);
+
+      return [...new Set(joined)];
+    },
+  },
   methods: {
+    saveFile: function() {
+      const data = JSON.stringify(this.reformattedText);
+      const blob = new Blob([data], { type: "text/plain" });
+      const e = document.createEvent("MouseEvents"),
+        a = document.createElement("a");
+      a.download = this.newWatchlistName + ".txt";
+      a.href = window.URL.createObjectURL(blob);
+      a.dataset.downloadurl = ["text", a.download, a.href].join(":");
+      e.initEvent(
+        "click",
+        true,
+        false,
+        window,
+        0,
+        0,
+        0,
+        0,
+        0,
+        false,
+        false,
+        false,
+        false,
+        0,
+        null
+      );
+      a.dispatchEvent(e);
+    },
     selectFile(event) {
       console.log(event.target.files);
       this.loadTextFromFile(event.target.files);
@@ -88,6 +131,12 @@ export default {
         };
         reader.readAsText(file);
       }
+    },
+    reformat(arr) {
+      let filterOutSections = arr
+        .split(",")
+        .filter((item) => item.indexOf("###") < 0);
+      return [...new Set(filterOutSections)];
     },
   },
 };
