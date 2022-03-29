@@ -7,10 +7,6 @@
       <input type="file" multiple @change="selectFile" />
     </label>
 
-    <button class="btn btn-success" @click="loadTextFromFile">
-      Read
-    </button>
-
     <div v-if="message" class="alert alert-light" role="alert">
       <ul>
         <li v-for="(ms, i) in message.split('\n')" :key="i">
@@ -51,6 +47,15 @@
       </button>
 
       <br /><br />
+      <div class="">
+        <p>
+          total tickers:
+          {{ reformattedText.length > 1 ? reformattedText.length : 0 }}
+        </p>
+        <p>top watched tickers</p>
+      </div>
+
+      <br /><br />
 
       {{ reformattedText }}
     </div>
@@ -71,12 +76,10 @@ export default {
   },
   computed: {
     reformattedText() {
-      // return this.text.split;
       let joined = this.text
         .join()
         .split(",")
         .filter((item) => item.indexOf("###") < 0);
-      console.log(joined);
 
       return [...new Set(joined)];
     },
@@ -110,7 +113,6 @@ export default {
       a.dispatchEvent(e);
     },
     selectFile(event) {
-      console.log(event.target.files);
       this.loadTextFromFile(event.target.files);
       this.files.push(event.target.files);
       this.loadNames(event.target.files);
@@ -140,4 +142,11 @@ export default {
     },
   },
 };
+
+// drag and drop area
+// combine the tickers and sum top tickers
+// install tailwind
+// animation for the text drag and drop
+// stats formatting
+// add the week number / month / combined text --> all buttons that add text to the input name
 </script>
