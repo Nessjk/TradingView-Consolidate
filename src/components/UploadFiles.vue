@@ -296,8 +296,6 @@
         </svg>
         Download watchlist
       </button>
-
-      <!-- {{ reformattedText }} -->
     </div>
   </div>
 </template>
