@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div class="container" style="width:600px">
+    <div class="container" style="width:900px">
       <div style="margin: 20px">
         <!-- <h3>bezkoder.com</h3>
         <h4>Vue.js multiple Files upload</h4> -->
