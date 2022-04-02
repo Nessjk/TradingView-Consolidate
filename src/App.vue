@@ -19,5 +19,14 @@ export default {
   components: {
     UploadFiles,
   },
+
+  methods: {
+    track() {
+      this.$gtag.pageview(this.$route);
+    },
+  },
+  created() {
+    this.track();
+  },
 };
 </script>
