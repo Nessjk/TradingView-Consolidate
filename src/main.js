@@ -6,11 +6,9 @@ import "@/input.css";
 
 import VueGtag from "vue-gtag";
 
-createApp(App)
-  .use(VueGtag, {
-    config: { id: "G-GE514R4JPK" },
-  })
-  .mount("#app");
+Vue.use(VueGtag, {
+  config: { id: "G-GE514R4JPK" },
+});
 
 Vue.config.productionTip = false;
 
