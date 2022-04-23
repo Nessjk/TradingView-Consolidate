@@ -105,8 +105,7 @@
             >
             <p id="comments-description" class="text-gray-500">
               The consolidated watchlist will keep the sections. If the item
-              moved it will stay in the latest section. If the section is empty
-              it will be removed.
+              moved it will stay in the latest section.
             </p>
           </div>
         </div>
