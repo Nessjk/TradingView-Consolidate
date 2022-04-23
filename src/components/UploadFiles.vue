@@ -86,6 +86,31 @@
         Export your list from Trading View and upload one or multiple text files
         here.
       </p>
+      <fieldset class="space-y-5 mt-6">
+        <div class="relative flex items-start">
+          <div class="flex items-center h-5">
+            <input
+              id="comments"
+              aria-describedby="comments-description"
+              name="comments"
+              type="checkbox"
+              class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+              v-model="consolidateSections"
+              @click="toggleRemoveSections"
+            />
+          </div>
+          <div class="ml-3 text-sm">
+            <label for="comments" class="font-medium text-gray-700"
+              >Keep and Consolidate sections</label
+            >
+            <p id="comments-description" class="text-gray-500">
+              The consolidated watchlist will keep the sections. If the item
+              moved it will stay in the latest section. If the section is empty
+              it will be removed.
+            </p>
+          </div>
+        </div>
+      </fieldset>
     </div>
 
     <div class=" sm:border-gray-200 sm:pt-5 w-full mb-12">
@@ -234,7 +259,7 @@
 
     <div>
       <dl
-        class="mt-5 grid grid-cols-1 rounded-lg bg-white overflow-hidden shadow divide-y divide-gray-200 md:grid-cols-3 md:divide-y-0 md:divide-x"
+        class="mt-5 grid grid-cols-1 rounded-lg bg-white overflow-hidden shadow divide-y divide-gray-200 md:grid-cols-2 md:divide-y-0 md:divide-x"
       >
         <div class="px-4 py-3 sm:p-6">
           <dt class="text-base font-normal text-gray-900">Total Tickers</dt>
@@ -262,7 +287,7 @@
           </dd>
         </div>
 
-        <div class="px-4 py-3 sm:p-6">
+        <!-- <div class="px-4 py-3 sm:p-6">
           <dt class="text-base font-normal text-gray-900">Removed sections</dt>
           <dd class="mt-1 flex justify-between items-baseline md:block lg:flex">
             <div
@@ -271,7 +296,7 @@
               {{ sections.length > 0 ? sections.length : 0 }}
             </div>
           </dd>
-        </div>
+        </div> -->
       </dl>
     </div>
 
@@ -312,7 +337,7 @@
 
     <div class="mt-12">
       <h3 class="text-lg leading-6 font-medium text-gray-900">
-        Enter file name
+        Enter file name*
       </h3>
       <p class="mt-1 text-sm text-gray-500">
         Export your list from Trading View and upload one or multiple text files
@@ -328,18 +353,25 @@
           id="first-name"
           autocomplete="given-name"
           v-model="newWatchlistName"
+          @keyup="removeError"
           placeholder="Enter name of file"
           class="shadow focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-3"
         />
+
+        <p v-if="showError" class="text-sm text-red-500 mt-2">
+          You must fill in the file name*
+        </p>
       </div>
     </div>
 
     <div class="mb-12">
       <button
         @click="saveFile"
-        :disabled="newWatchlistName.length < 1 && newWatchlistName"
         type="button"
         class="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        :class="[
+          newWatchlistName.length == 0 ? 'custom--cursor-not-allowed' : '',
+        ]"
       >
         <!-- Heroicon name: solid/mail -->
         <svg
@@ -373,16 +405,61 @@ export default {
       names: [],
       newWatchlistName: "",
       isTwitter: true,
+      consolidateSections: false,
+      showError: false,
     };
   },
   computed: {
+    checkInput() {
+      return this.newWatchlistName.length;
+    },
+
     tvText() {
+      if (!this.text.length) return null;
       let joined = this.text
         .join()
         .split(",")
         .filter((item) => item.indexOf("###") < 0);
 
       return [...new Set(joined)].join(",").replace(/['"]+/g, "");
+    },
+
+    tvConsolidatedSections() {
+      if (!this.text.length) return null;
+
+      let arr = this.text;
+      let currentProp = "###UNCATEGORISED";
+
+      let t = arr.reduce(
+        function(acc, key) {
+          if (key.indexOf("#") > -1) {
+            acc[key] = [];
+            currentProp = key;
+          } else {
+            acc[currentProp].push(key);
+          }
+          return acc;
+        },
+        { "###UNCATEGORISED": [] }
+      );
+
+      // remove empty sections
+      let clean = Object.entries(t)
+        .filter((v) => v.length > 0)
+        .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {});
+
+      // need to add comma to key to separate the section
+      let addComma = Object.entries(clean).map((i) => {
+        if (i[0].indexOf("#") > -1) {
+          i = i.slice(0) + ",";
+        }
+        return i;
+      });
+
+      // stringify, remove " and remove last ,
+      return JSON.stringify(addComma.join(""))
+        .replace(/["]/g, "")
+        .slice(0, -1);
     },
     reformattedText() {
       let joined = this.text
@@ -409,6 +486,14 @@ export default {
   },
 
   methods: {
+    removeError() {
+      if (this.newWatchlistName.length > 0) {
+        this.showError = false;
+      }
+    },
+    toggleRemoveSections() {
+      this.consolidateSections = !this.consolidateSections;
+    },
     closeTwitter() {
       this.isTwitter = false;
     },
@@ -417,7 +502,17 @@ export default {
       this.text.splice($index, 1);
     },
     saveFile: function() {
-      const data = this.tvText;
+      if (this.newWatchlistName.length == 0) {
+        this.showError = true;
+        return;
+      }
+
+      const data = !this.consolidateSections
+        ? this.tvText
+        : this.tvConsolidatedSections;
+
+      // console.log(data);
+
       const blob = new Blob([data], { type: "text/plain" });
       const e = document.createEvent("MouseEvents"),
         a = document.createElement("a");
@@ -481,7 +576,7 @@ export default {
   },
 };
 
-// add the week number / month / combined text --> all buttons that add text to the input name
+// add the week number / month / combined textu --> all buttons that add text to the input name
 </script>
 
 <style>
@@ -493,5 +588,8 @@ export default {
 }
 .cls-3 {
   fill: #ffb;
+}
+.custom--cursor-not-allowed {
+  cursor: not-allowed !important;
 }
 </style>
